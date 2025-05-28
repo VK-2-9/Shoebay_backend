@@ -29,6 +29,7 @@ const cartProductsSchema = new mongoose.Schema({
   size: Number,
   img: String,
   qty: Number,
+  uId: String,
 });
 const orderProductsSchema = new mongoose.Schema({
   id: Number,
@@ -39,11 +40,44 @@ const orderProductsSchema = new mongoose.Schema({
   address: String,
 });
 
+const loginDetailsSchema = new mongoose.Schema({
+  email: String,
+  uId: String,
+  name:String
+});
+
 //model creation.........................................................
 
 const allProducts = mongoose.model("allproduct", allProductsSchema);
 const cartProducts = mongoose.model("cartproduct", cartProductsSchema);
 const orderProducts = mongoose.model("orderproduct", orderProductsSchema);
+const loginDetails = mongoose.model("logindetails", loginDetailsSchema);
+//user details.......................................login details..........................
+app.post("/api/logindetails/signup", async (req, res) => {
+  const user = loginDetails.findOne(req.body.uId);
+
+  try {
+    const newUser = new loginDetails({
+      email: req.body.email,
+      uId: req.body.uId,
+      name:req.body.name
+    });
+    const user = await newUser.save();
+    res.status(200).json(user);
+  } catch (err) {
+    res.status(500).json({ message: "unable to add", err: err.message });
+  }
+});
+
+app.get("/api/logindetails", async (req, res) => {
+  try {
+    const users = await loginDetails.find();
+    res.send(users);
+  } catch (err) {
+    res.send("Unable to get users data");
+  }
+});
+
 //getting all proucts ..................products collection......................
 app.get("/api/productsData", async (req, res) => {
   try {
@@ -63,46 +97,45 @@ app.get("/api/cartproducts", (req, res) => {
 //adding new product to cart
 app.post("/api/cartproducts", async (req, res) => {
   ///checking for duplicate
-    const existing= await cartProducts.findOne({
-      id:req.body.id,
-      size:req.body.size
-    })
-    if(existing){
-        res.status(401).json({message:"Already added to the cart"})
-    }else{
-         const product = new cartProducts({
+  const existing = await cartProducts.findOne({
     id: req.body.id,
-    name: req.body.name,
-    price: req.body.price,
     size: req.body.size,
-    img: req.body.img,
-    qty: Number(req.body.qty),
+    uId: req.body.uId,
   });
-  try {
-    const cartProduct = await product.save();
-    res.status(201).json(cartProduct);
-  } catch (err) {
-    res.status(400).json(err );
-    
-  }
+  if (existing) {
+    res.status(401).json({ message: "Already added to the cart" });
+  } else {
+    const product = new cartProducts({
+      id: req.body.id,
+      name: req.body.name,
+      price: req.body.price,
+      size: req.body.size,
+      img: req.body.img,
+      qty: Number(req.body.qty),
+      uId: req.body.uId,
+    });
+    try {
+      const cartProduct = await product.save();
+      res.status(201).json(cartProduct);
+    } catch (err) {
+      res.status(500).json(err);
     }
- 
+  }
 });
 // increasing the qty...............................
 app.patch("/api/cartproducts/incqty/:id", async (req, res) => {
   try {
-    
     const cartProduct = await cartProducts.findById(req.params.id);
     if (!cartProduct) {
-      return res.status(404).json("Product not found in cart");}
-      //increasing the count
-      const updateProduct = await cartProducts.findByIdAndUpdate(
-        req.params.id,
-        { $inc: { qty: 1 } },
-        { new: true }
-      );
-      res.status(200).json(updateProduct);
-    
+      return res.status(404).json("Product not found in cart");
+    }
+    //increasing the count
+    const updateProduct = await cartProducts.findByIdAndUpdate(
+      req.params.id,
+      { $inc: { qty: 1 } },
+      { new: true }
+    );
+    res.status(200).json(updateProduct);
   } catch (err) {
     res
       .status(500)
@@ -130,20 +163,19 @@ app.patch("/api/cartproducts/decqty/:id", async (req, res) => {
 });
 
 //deleting the product
-app.patch("/api/cartproducts/deleteproduct/:id",async(req,res)=>{
-  try{
-      const cartProduct=await cartProducts.findById(req.params.id)
-      console.log(cartProduct.name)
-    if(!cartProduct){
-      res.status(404).json("Product not found")
+app.patch("/api/cartproducts/deleteproduct/:id", async (req, res) => {
+  try {
+    const cartProduct = await cartProducts.findById(req.params.id);
+    console.log(cartProduct.name);
+    if (!cartProduct) {
+      res.status(404).json("Product not found");
     }
-    await cartProduct.deleteOne()
-    res.status(200).json({message:"deleted successfully"})
-  }catch(err){
-    res.status(500).json({message:"unable to delete",err:err.message})
+    await cartProduct.deleteOne();
+    res.status(200).json({ message: "deleted successfully" });
+  } catch (err) {
+    res.status(500).json({ message: "unable to delete", err: err.message });
   }
-    
-})
+});
 
 app.get("/test", (req, res) => {
   console.log("wrking");
