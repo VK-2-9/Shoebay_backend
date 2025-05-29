@@ -32,12 +32,13 @@ const cartProductsSchema = new mongoose.Schema({
   uId: String,
 });
 const orderProductsSchema = new mongoose.Schema({
-  id: Number,
   name: String,
   price: String,
-  qty: Number,
-  size: Number,
+  products:Array,
   address: String,
+  mobileNumber:Number,
+  uId:String
+
 });
 
 const loginDetailsSchema = new mongoose.Schema({
@@ -176,6 +177,27 @@ app.patch("/api/cartproducts/deleteproduct/:id", async (req, res) => {
     res.status(500).json({ message: "unable to delete", err: err.message });
   }
 });
+
+//orering products
+app.post("/api/orderproducts",async (req,res)=>{
+    try{
+        const newOrder=  new orderProducts({
+            name: req.body.name,
+            price: req.body.price,
+            products:req.body.products,
+            address: req.body.address,
+            mobileNumber:req.body.mobileNumber,
+            uId:req.body.uId
+
+        })
+        const order=await newOrder.save()
+        res.status(200).json(order)
+
+    }catch(err){
+      res.status(500).json({message:"unable to place order",err:err.message})
+    }
+
+})
 
 app.get("/test", (req, res) => {
   console.log("wrking");
