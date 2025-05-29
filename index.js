@@ -201,7 +201,7 @@ app.post("/api/orderproducts",async (req,res)=>{
 
 app.get("/api/orderproducts",async (req,res)=>{
       orderProducts.find().then((data)=>{
-        res.status.json(data)
+        res.status(200).json(data)
       }).catch((err)=>{
         res.status(500).json({message:"unable to get order data",err:err.message})
       })
