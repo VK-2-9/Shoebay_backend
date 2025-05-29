@@ -12,7 +12,7 @@ mongoose
     "mongodb+srv://VishalnathKrishnaSA:Paladinspes@cluster0.ffevusb.mongodb.net/Shoebay"
   )
   .then(() => console.log("db connected"))
-  .catch((err) => console.log(err));
+  .catch((err) => console.log("error in db connection", err));
 //schema
 const allProductsSchema = new mongoose.Schema({
   id: Number,
@@ -196,6 +196,15 @@ app.post("/api/orderproducts",async (req,res)=>{
     }catch(err){
       res.status(500).json({message:"unable to place order",err:err.message})
     }
+
+})
+
+app.get("/api/orderproducts",async (req,res)=>{
+      orderProducts.find().then((data)=>{
+        res.status.json(data)
+      }).catch((err)=>{
+        res.status(500).json({message:"unable to get order data",err:err.message})
+      })
 
 })
 
